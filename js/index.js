@@ -3,17 +3,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const user = { "id": 1, "username": "pouros" }
     const booksUrl = "http://localhost:3000/books/"
 
-    const bookList = document.querySelector('#list-panel')
-    const bookShowPanel = document.querySelector('#show-panel')
+    const listPanel = document.querySelector('#list-panel')
+    const showPanel = document.querySelector('#show-panel')
 
-
-    ///server things
-
+    //SERVER
     function getAllBooks() {
         fetch(booksUrl)
             .then(resp => resp.json())
-            .then(data =>
-                data.forEach(book => buildOneBook(book)))
+            .then(data => data.forEach(book => makeBookPreview(book)))
     }
 
     function updateBook(book) {
@@ -23,77 +20,79 @@ document.addEventListener("DOMContentLoaded", function () {
                 headers: { "content-type": "application/json" },
                 body: JSON.stringify(book)
             }).then(resp => resp.json())
+        
     }
 
-    ///client things
+    //CLIENT
 
-
-    function buildOneBook(book) {
+    function makeBookPreview(book) {
         const bookDiv = document.createElement('div')
+        
         const bookTitle = document.createElement('h2')
-        const bookImage = document.createElement('img')
+        bookTitle.innerText= book.title
 
-        bookImage.src = book.img_url
-        bookTitle.innerText = book.title
-        bookDiv.append(bookTitle, bookImage)
-        bookList.appendChild(bookDiv)
-        bookDiv.addEventListener('click', () => showBook(book))
+        const bookImg = document.createElement('img')
+        bookImg.src = book.img_url
+
+        bookDiv.append(bookTitle, bookImg)
+        listPanel.append(bookDiv)
+
+        bookDiv.addEventListener('click', () => bookShowModal(book))
     }
 
+    function bookShowModal(book) { 
 
-    function showBook(book) {
-        while (bookShowPanel.firstChild) bookShowPanel.removeChild(bookShowPanel.firstChild)
         const bookDiv = document.createElement('div')
+        while (showPanel.firstChild) showPanel.removeChild(showPanel.firstChild)
+
         const bookTitle = document.createElement('h2')
-        const bookImage = document.createElement('img')
+        bookTitle.innerText= book.title
+
+        const bookImg = document.createElement('img')
+        bookImg.src = book.img_url
+
         const bookDesc = document.createElement('p')
-        const bookUsers = document.createElement('ul')
-        bookUsers.id = "users-ul"
-
-        const likeButton = document.createElement('button')
-        likeButton.className = "like-btn"
-        likeButton.innerText = userLikedBookAlready(book) ? "Unlike" : "Like Me"
-
-
-        bookImage.src = book.img_url
         bookDesc.innerText = book.description
-        bookTitle.innerText = book.title
-        book.users.forEach(user => {
-            let bookUserLi = document.createElement('li')
-            bookUserLi.innerText = user.username
-            bookUserLi.id = `user-${user.id}`
-            bookUsers.appendChild(bookUserLi)
-        }
 
-        )
-        bookDiv.append(bookTitle, bookImage, bookDesc, bookUsers, likeButton)
-        bookShowPanel.appendChild(bookDiv)
+        const bookUsers = document.createElement('ul')
+        book.users.forEach(user => { 
+            let userLi = document.createElement('li')
+            userLi.innerText = user.username
+            userLi.id = `user-${user.id}`
+            bookUsers.appendChild(userLi)
+        })
 
-        likeButton.addEventListener('click', (e) => {
+        bookDiv.append(bookTitle, bookImg, bookDesc, bookUsers)
+        showPanel.appendChild(bookDiv)
+
+        const likeBtn = document.createElement('button')
+        likeBtn.innerText = "Like" 
+        bookDiv.appendChild(likeBtn)
+
+        likeBtn.addEventListener('click', (e) => { 
             e.preventDefault()
             if (!userLikedBookAlready(book)) {
-                likeButton.innerText = "Like Me"
-                let bookUserLi = document.createElement('li')
-                bookUserLi.innerText = user.username
-                bookUserLi.id = `user-${user.id}`
-                bookUsers.appendChild(bookUserLi)
+                let userLi = document.createElement('li')
+                userLi.innerText = user.username
+                userLi.id = `user-${user.id}`
+                bookUsers.appendChild(userLi)
                 book.users.push(user)
                 updateBook(book)
-                likeButton.innerText = "Unlike Me"
-            } else {
-                userLi = document.querySelector(`#user-${user.id}`)
-                bookUsers.removeChild(userLi)
-                book.users = book.users.filter(usr => usr.id !== user.id)
+                likeBtn.innerText = "Unlike"
+            } else { 
+                let userLi = document.querySelector(`#user-${user.id}`)
+                userLi.remove()
+                book.users = book.users.filter(bookUser => bookUser.id !== user.id)
                 updateBook(book)
-                    likeButton.innerText = "Like Me"
+                likeBtn.innerText = "Like Me"
             }
         })
     }
 
-function userLikedBookAlready(book) {
-    return book.users.find(bookUser => bookUser.id == user.id)
-}
 
-getAllBooks()
+    getAllBooks()
 
+    function userLikedBookAlready(book){ 
+        return book.users.find(bookUser => bookUser.id === user.id)
+    }
 });
